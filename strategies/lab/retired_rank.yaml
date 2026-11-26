@@ -1,0 +1,17 @@
+# 已淘汰的選股排名規則（rank.retired: true，2026-10-30 保留期驗證失敗）。
+# 只用來驗證實驗室與 rank_study 的結果一致（開發期年化 29.8%、Sharpe 0.88、回撤 -52.8%），不是要採用的策略。
+name: retired_rank
+registered: 2026-10-30
+hypothesis: 近期有動能、營收年增為正且近四季獲利為正的股票，之後仍有超額報酬（已淘汰，僅用來驗證實驗室與 rank_study 一致）
+rationale: 動能加基本面品質的排名（參考 FinLab 做法）；已淘汰，僅作實驗室的對照檢查
+fails_if: 保留期（2025 起）表現落後 0050 含息——已發生（年化 12.3% vs 0050 54.1%）
+universe: full
+rebalance_days: 63
+top_n: 10          # config rank.full_top_n
+lookback: 126      # config rank.lookback
+filters:
+  - {factor: mom63, op: ">", value: 0}
+  - {factor: mom, op: ">", value: 0}
+  - {factor: yoy3, op: ">", value: 0}
+  - {factor: eps_ttm, op: ">", value: 0}
+rank_by: {factor: mom, order: desc}

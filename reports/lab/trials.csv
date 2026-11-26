@@ -1,0 +1,5 @@
+﻿time,name,spec_hash,cagr,sharpe,p_random_sharpe,p_random_cagr,verdict,git_commit,data_hash,n_random
+2026-11-16T02:52:28,retired_rank,b4237c2e,0.2821,0.846,0.143,0.048,不通過,4212b0c+未提交修改,ae978e2b,20
+2026-11-16T12:25:54,global_trend_momentum,cbf75b0d,0.1795,0.599,0.297,0.149,不通過,0f3e636,ae978e2b,100
+2026-11-16T17:27:55,cheap_growth,5199915f,-0.0072,0.087,0.960,0.960,不通過,536d732,20390144,100
+2026-11-26T17:06:10,ai_illiquidity_quality,26892b6e,0.1905,0.947,0.059,0.089,不通過,e433b8b+未提交修改,69782003,100

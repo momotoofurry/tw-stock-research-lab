@@ -1,0 +1,175 @@
+# 台股分析與回測工具設定（只做研究與模擬，無任何下單功能）
+data_dir: data
+reports_dir: reports
+
+finmind:
+  url: https://api.finmindtrade.com/api/v4/data
+  timeout_seconds: 30
+  max_retries: 4            # 遇到限流 / 網路錯誤最多重試次數
+  retry_wait_seconds: 60    # 第一次等待秒數，之後每次加倍
+  recheck_hours: 2          # 最新一天的資料在幾小時內查過就不再查（省額度）
+
+costs:
+  commission_rate: 0.001425 # 手續費率
+  commission_discount: 1.0  # 手續費折扣，例如 0.6 = 六折
+  min_commission: 20        # 每筆最低手續費（元）
+  sell_tax_rate: 0.003      # 賣出證交稅
+  price_limit: 0.10         # 漲跌停幅度
+  dividend_tax_rate: 0.0    # 股利稅負比例（二代健保 2.11% / 所得稅依個人狀況，預設不計）
+
+backtest:
+  initial_cash: 5000000     # 2330 近年股價 > 2000，一張 > 200 萬；資金太少整張模式會買不起
+  lot_mode: board           # board = 整張（1000 股）；odd = 零股（1 股）
+  max_volume_participation: 0.05  # 每次買進最多 = 前 20 日均量 × 5%（null = 不限制）；賣出一次全賣
+  volume_window: 20
+  trading_days_per_year: 252
+  risk_free_rate: 0.0
+
+strategies:
+  ma_cross:
+    fast: 5
+    slow: 20
+  candle_volume:
+    trend_ma: 20            # 只在收盤 > MA20 時做多
+    vol_confirm: 1.5        # 進場那天量 > 前 5 日均量 × 1.5
+    max_hold: 20            # 最多持有天數（交易日）
+  lgbm:
+    train_size: 500         # 每折訓練天數（滾動視窗）
+    test_size: 60           # 每折測試天數
+    # 2026-10-29 依開發期 40 檔研究由 h=1 改為 h=20（來回 214→42 次、超額中位數 −28.8%→−9.5%）；
+    # 改善來自成本下降，不是預測力（勝過同換手隨機訊號的平均百分位 53%）
+    horizon: 20             # 標籤：未來 20 個交易日報酬
+    hurdle: 0.02            # 報酬 > 2% 才算 1
+    gap: 20                 # 必須 >= horizon
+    threshold: 0.55         # 機率 > 0.55 進場
+    exit_threshold: 0.45    # 機率 < 0.45 出場（中間維持原部位）
+    min_hold: 10            # 進場後至少持有 10 個交易日
+    params:
+      n_estimators: 200
+      learning_rate: 0.03
+      num_leaves: 15
+      min_child_samples: 30
+      subsample: 0.8
+      subsample_freq: 1
+      colsample_bytree: 0.8
+      random_state: 42
+      verbose: -1
+
+evaluation:
+  holdout_start: "2025-01-01"   # 之後的資料是保留期：調參只看之前；要看保留期必須加 --holdout，且每次都會記錄
+  adjust_signal_prices: true    # 用除權息還原價產生訊號 / 特徵（成交仍用未還原價）
+  n_random: 200                 # 顯著性檢定的隨機訊號組數
+  # 多檔研究股票池：涵蓋不同產業，刻意包含這段期間表現差的股票。
+  # 注意：都是「現在仍上市」的股票，有存活者偏差（已下市的爛股不在裡面）。
+  universe:
+    "2330": 台積電
+    "2317": 鴻海
+    "2454": 聯發科
+    "2303": 聯電
+    "2308": 台達電
+    "2382": 廣達
+    "2357": 華碩
+    "2395": 研華
+    "2408": 南亞科
+    "2409": 友達
+    "3481": 群創
+    "3008": 大立光
+    "2474": 可成
+    "2498": 宏達電
+    "2327": 國巨
+    "2412": 中華電
+    "4904": 遠傳
+    "2881": 富邦金
+    "2882": 國泰金
+    "2891": 中信金
+    "2884": 玉山金
+    "2885": 元大金
+    "2801": 彰銀
+    "1301": 台塑
+    "1303": 南亞
+    "6505": 台塑化
+    "2002": 中鋼
+    "1101": 台泥
+    "1102": 亞泥
+    "1402": 遠東新
+    "2105": 正新
+    "2201": 裕隆
+    "2207": 和泰車
+    "1216": 統一
+    "2912": 統一超
+    "9910": 豐泰
+    "2603": 長榮
+    "2609": 陽明
+    "2618": 長榮航
+    "2610": 華航
+
+dashboard:
+  history_start: "2018-01-01"
+  n_random: 100                 # 看盤介面的顯著性檢定組數（少一點比較快）
+  watchlist:
+    "0050": 元大台灣50
+    "2330": 台積電
+
+notify:
+  channel: line                 # LINE Messaging API；憑證放環境變數 LINE_CHANNEL_ACCESS_TOKEN / LINE_USER_ID
+  daily_summary: true           # 每個交易日收盤後傳一則摘要（約 22 則 / 月，免費額度 200 則 / 月）
+  alert_mode: new               # new = 只推「新觸發」的規則；all = 每天重推所有觸發中的規則
+  holdings_trend: true          # 每天另外推「持股走向」（趨勢、支撐壓力、法人、營收；每則最多 4 檔）
+  weekly_review_weekday: 4     # 每週哪一天收盤後多推一則預測檢討（0 = 週一 … 4 = 週五；-1 = 不推）
+
+rank:                           # 選股排名策略（python -m src.cli rank）
+  # 2026-10-30 保留期驗證失敗（年化 12.3% vs 0050 54.1%）→ 淘汰；保留期已消耗，不得再用這段資料調整此規則
+  retired: true
+  retired_note: "2026-10-30 保留期驗證失敗"
+  start: "2019-01-02"           # 第一次調整（需要前一年的價格算動能）
+  lookback: 126                 # 排名用的動能回看天數
+  top_n: 8                      # 持股檔數（等權）
+  rebalance_days: 63            # 每幾個交易日調整一次（約一季）
+  min_price: 10
+  min_turnover: 20000000        # 近 20 日平均成交金額下限（元）
+  benchmark: "0050"
+  grid_lookback: [105, 126, 147]
+  grid_top_n: [6, 8, 10]
+  # 全市場版本（python -m src.cli rank --full）
+  full_start: "2017-07-03"      # 資料從 2016 起，需要一年營收算年增
+  full_min_turnover: 50000000   # 全市場用較高的流動性門檻（20 日均成交金額 5000 萬）
+  full_top_n: 10
+
+line_bot:
+  port: 8787                    # 只綁 127.0.0.1；ngrok 轉發到這個 port
+  public_domain: "goldsmith-wham-campsite.ngrok-free.dev"  # ngrok 免費固定網域，例如 xxxx.ngrok-free.app（不是密碼）
+
+vintages:
+  per_run: 100   # 每天輪流更新幾檔候選股的月營收 / 財報（全市場約 16 個交易日一輪）
+  max_minutes: 20   # 每次更新的總時間上限；超過或遇到 FinMind 錯誤就停，下次從沒處理到的地方繼續
+
+track:                          # 前瞻模擬追蹤（python -m src.cli track；紙上模擬，不下單）
+  min_coverage: 0.95            # 訊號日全市場候選有當天價格的比例下限；不足就不記訊號、順延到下一個交易日
+  max_defer_days: 5             # 最多順延幾個交易日；超過就記一列 skipped（這一期不記訊號）
+  prefetch_days: 5              # 訊號日前幾個交易日起，每天補抓全市場候選的資料（讓訊號日資料齊全）
+  prefetch_minutes: 60          # 每天補抓的時間上限（分鐘）；遇到 FinMind 錯誤或超時就停，下次接著補
+  random_groups: 5              # 每個訊號日同時記錄幾組配對隨機選股（同池、同檔數、同換手）
+  seed: 20261126                # 配對隨機組的固定 seed（和訊號序號、組別一起決定抽樣）
+
+watch:                          # 自選股每週變化提醒（python -m src.cli watch；每週檢討那天由每日排程推播）
+  high_low_window: 250          # 「創新高 / 新低」的回看交易日數（用還原收盤價）
+  recent_days: 5                # 「本週」= 最近幾個交易日
+  chips_days: 5                 # 外資累計買賣超的天數（可選 1 / 5 / 20）
+
+decisions:                      # 決策日誌
+  reminders: true               # 到期提醒：買進決策填了預計持有月數，到期那天（每日排程）提醒回頭看理由；每筆只提醒一次
+
+llm:                            # 本機 LLM 白話摘要（Ollama，只允許 127.0.0.1 / localhost；資料不會送出本機）
+  enabled: false                # 預設關閉；改成 true 才在每日推播最前面加一段白話摘要（原訊息照常送出）
+                                # Ollama 沒開、逾時、數字對不上原文、出現買賣用語時，自動略過、只送原訊息
+  host: "http://127.0.0.1:11434"
+  model: "qwen3:4b-instruct-2507-q4_K_M"
+  timeout_seconds: 180          # 第一次呼叫要暖機，給長一點
+  max_chars: 300                # 摘要超過這個字數就不採用
+  keep_alive: "5m"              # 模型在記憶體停留多久
+
+lab:                            # 策略實驗室
+  ai_monthly_budget: 2          # AI 提出的規則每月最多新登記幾個（門檻不因提出者而改變）
+  small_account:               # 小額帳戶情境：只在報告多列一段，不影響判定
+    initial_cash: 20000
+    commission_min: 20         # 最低手續費（元）；依你的券商零股電子下單規定修改

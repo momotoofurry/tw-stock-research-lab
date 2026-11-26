@@ -1,0 +1,42 @@
+# 策略檔範本：複製成 strategies/lab/<你的策略名>.yaml 再填，然後執行
+#   .venv\Scripts\python -m src.cli lab strategies/lab/<你的策略名>.yaml
+#
+# 規則（見 docs/研究流程.md、docs/策略實驗室.md）：
+# - 先寫下假設與失效條件，再跑；跑完不滿意不要回頭改這個檔 —— 改規則就另存新檔、新名稱
+# - 每跑一個不同的規則，試驗帳本的 N 就 +1，顯著性門檻就變嚴（Bonferroni）；先想清楚再試
+# - 實驗室只用開發期（2025 年以前）；「通過」只代表開發期證據過門檻，不是投資建議
+# - 預設 --n-random 100：N ≤ 5 個規則時夠用；規則更多時報告會提示要加大
+
+name: my_idea                    # 只用英數與底線；報告與帳本都用這個名稱
+registered: 2026-11-16           # 第一次寫下這個想法的日期（改成你自己登記的那天）
+hypothesis: 一句話寫你認為這個規則為什麼會賺到超額報酬
+rationale: 這個優勢可能存在的原因（承擔了什麼風險？市場對什麼反應太慢？）
+fails_if: 什麼情況下你會認為這個想法錯了（例如：某種市場環境、某個數字反轉）
+# 選填（AI 提出的策略檔必填，author: ai）：不進規則雜湊
+# author: user                   # user 或 ai
+# who_pays: 這個超額報酬是從誰身上賺來的？他們為什麼會一直犯錯或願意付出？
+# source: 依據的文獻或已知現象
+# family: 想法家族（例如 value、momentum、quality、earnings_drift）
+
+universe: full                   # 全市場候選（含已下市），每個調整日用當天的價格 / 流動性門檻篩
+rebalance_days: 63               # 幾個交易日調整一次（63 ≈ 一季；長期持有可試 126 或 252）
+top_n: 10                        # 每次持有幾檔，等權
+lookback: 126                    # mom 因子的回看天數
+
+# 篩選條件：全部都要成立。可用因子（都是第 t 天收盤時已知的資料）：
+#   mom63   近 63 個交易日漲幅（還原權息）
+#   mom     近 lookback 個交易日漲幅
+#   yoy3    近 3 個月營收合計的年增率（只用已公布的月營收）
+#   eps_ttm 近四季 EPS 合計（只用已公布的季報）
+#   turnover 近 20 日平均成交金額（元）
+#   close   收盤價
+#   pe      本益比 = 收盤價 / 近四季 EPS（只用已公布的季報，依減資 / 分割換算成目前每股）；EPS ≤ 0（虧損）時沒有值，任何 pe 條件都不成立
+#   dy      近 365 天殖利率 = 除息日在過去一年內的每股股利（含配股折現金，不是純現金；依減資 / 分割換算成目前每股）/ 收盤價；沒配息為 0
+# op 可以是 > >= < <=；股價與成交金額門檻由 config.yaml 統一套用
+# （rank.min_price；預設股票池用 rank.min_turnover、全市場用 rank.full_min_turnover），策略檔不能改
+filters:
+  - {factor: yoy3, op: ">", value: 0.10}
+  - {factor: eps_ttm, op: ">", value: 0}
+
+# 排序：從篩出來的股票中依這個因子取前 top_n 檔（desc = 由大到小）
+rank_by: {factor: yoy3, order: desc}

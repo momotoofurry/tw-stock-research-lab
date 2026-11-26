@@ -1,0 +1,41 @@
+{
+  "model": "claude-opus-5-5",
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "\"$CLAUDE_PROJECT_DIR/.venv/Scripts/python.exe\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/review_gate.py\" check",
+            "timeout": 30,
+            "statusMessage": "Checking commit review approval"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && f=$(.venv/Scripts/python -c \"import json,sys;print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))\") && case \"$f\" in *.py) out=$(.venv/Scripts/python -m pytest -q 2>&1); rc=$?; if [ $rc -ne 0 ]; then echo \"$out\" | tail -25 >&2; exit 2; fi;; esac",
+            "timeout": 180,
+            "statusMessage": "Running pytest"
+          }
+        ]
+      }
+    ]
+  }
+}

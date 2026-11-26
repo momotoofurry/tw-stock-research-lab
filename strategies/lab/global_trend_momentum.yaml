@@ -1,0 +1,19 @@
+# 使用者的第一個選股想法（2026-11-16 與 Claude 一起寫；尚未執行 = 尚未登記）
+name: global_trend_momentum
+registered: 2026-11-16
+hypothesis: 跟著世界趨勢發展的股票，股價會先走強、營收也明顯加速，之後幾個月仍會表現較好
+rationale: 財報落後趨勢，等財報出來才買就太晚了；股價會比財報更早反映趨勢
+fails_if: 選舉或重大事件發生時；或股價強且營收高成長的股票，之後一季落後 0050
+
+universe: full
+rebalance_days: 63               # 每季調整
+top_n: 5                         # 集中持有 5 檔，等權
+lookback: 126                    # 近半年股價漲幅
+
+filters:
+  - {factor: yoy3, op: ">", value: 0.20}   # 營收明顯加速：近 3 個月年增 > 20%
+  - {factor: eps_ttm, op: ">", value: 0}   # 近四季有獲利
+  - {factor: mom, op: ">", value: 0}       # 近半年股價上漲
+
+# 依使用者的理由（股價比財報早反映趨勢），排序看股價動能
+rank_by: {factor: mom, order: desc}

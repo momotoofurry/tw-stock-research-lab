@@ -1,0 +1,12 @@
+data/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+portfolio.yaml
+# 個人持股摘要（含股數、成本）
+reports/brief_*.md
+*.log
+reports/decisions_*.md

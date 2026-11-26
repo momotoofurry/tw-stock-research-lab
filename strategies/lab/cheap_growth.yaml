@@ -1,0 +1,18 @@
+# 使用者的第二個選股想法（2026-11-16 與 Claude 一起寫；執行一次即登記，之後不改）
+name: cheap_growth
+registered: 2026-11-16
+hypothesis: 便宜又在成長的股票，之後會表現較好
+rationale: 還沒有接到大訂單，市場還沒注意到，所以股價便宜；成長被看見後股價會補上
+fails_if: 大跌；或預測的趨勢相反（營收成長沒有延續）
+
+universe: full
+rebalance_days: 63               # 每季調整
+top_n: 5                         # 持有 5 檔，等權
+lookback: 126                    # 本策略沒用到 mom，維持預設
+
+filters:
+  - {factor: pe, op: "<", value: 15}       # 便宜：本益比低於 15（虧損股自動排除）
+  - {factor: yoy3, op: ">", value: 0.10}   # 在成長：近 3 個月營收年增 > 10%（同時排除高峰後營收衰退的循環股）
+
+# 在符合條件的股票中，取最便宜的 5 檔
+rank_by: {factor: pe, order: asc}

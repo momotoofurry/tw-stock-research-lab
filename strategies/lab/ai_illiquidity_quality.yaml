@@ -1,0 +1,21 @@
+# AI 提出的選股假設（/tw-idea，2026-11-26）；執行一次即登記，之後不改
+name: ai_illiquidity_quality
+registered: 2026-11-26
+author: ai
+family: liquidity
+hypothesis: 在通過基本流動性門檻的股票中，成交金額較低、但近四季有獲利的公司，長期報酬高於大盤與隨機選股
+rationale: 持有成交冷清的股票要承擔較高的交易成本與難以快速脫手的風險，投資人會要求額外報酬作為補償；先排除虧損公司，避免只選到體質差、因此沒人交易的股票
+who_pays: 需要隨時能大量進出的投資人（法人、短線交易者）偏好熱門股，願意為流動性付出較低的預期報酬；長期持有、不需要頻繁交易的人可以賺到這份補償
+source: Amihud & Mendelson (1986) 買賣價差與資產定價；Amihud (2002) 非流動性溢酬；Asness, Frazzini, Israel, Moskowitz & Pedersen (2018) Size Matters, If You Control Your Junk（排除體質差的公司後，小型 / 低流動性溢酬才明顯）
+fails_if: 開發期報酬主要來自少數幾檔；或成交量上限讓大部分目標買不足；或兩段期間中有一段明顯輸給 0050
+
+universe: full
+rebalance_days: 126              # 半年調整一次：低流動性股交易成本高，文獻多用半年到一年的持有期
+top_n: 20                        # 持有 20 檔分散個股風險（文獻用投資組合，不是少數幾檔）
+lookback: 126                    # 本規則沒有用到 mom，維持預設
+
+filters:
+  - {factor: eps_ttm, op: ">", value: 0}   # 近四季有獲利（排除 junk）
+
+# 流動性門檻（20 日均成交金額 > 5000 萬、股價 > 10 元）由 config 統一套用；在通過門檻的股票中取成交金額最低的 20 檔
+rank_by: {factor: turnover, order: asc}
