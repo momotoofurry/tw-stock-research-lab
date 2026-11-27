@@ -10,6 +10,16 @@
 
 ---
 
+## Research summary / 研究摘要
+
+📄 **Working paper: [Do Simple Stock-Selection Rules Beat a Passive Benchmark in Taiwan After Realistic Frictions?](docs/paper.md)**
+
+**EN** — Research question: after realistic Taiwan-market frictions, does a simple, pre-registered stock-selection rule beat the dividend-inclusive 0050 ETF on a risk-adjusted basis by more than luck? Four rules (momentum + quality, revenue acceleration, value + growth, and an AI-proposed illiquidity premium) were tested on the full market including delisted stocks (2017-07 to 2024-12) against 0050 and a **turnover-matched random-selection control**, with six robustness checks and a Bonferroni correction. **All four failed.** The best development-period rule (28.2% CAGR) had a lower Sharpe than 0050 and returned 12.3% a year in the 2025–26 holdout versus 54.1% for 0050. Key methodological finding: the same rule had p = 0.010 against naive random portfolios but p = 0.143 against turnover-matched ones. **The choice of control decides the conclusion.**
+
+**中文** — 研究問題：扣除台股真實交易摩擦後，事前登記的簡單選股規則，風險調整後報酬能否以超過運氣的幅度勝過 0050 含息？在全市場（含已下市，2017-07 ~ 2024-12）檢驗四個規則：動能加品質、營收加速、價值加成長、AI 提出的低流動性溢酬。對照組是 0050 與**配對換手率的隨機選股**，另有六項穩健性檢驗與 Bonferroni 修正。**四個全部不通過。** 開發期最好的規則（年化 28.2%）Sharpe 仍低於 0050，保留期年化 12.3%，同期 0050 為 54.1%。方法論上最重要的發現：同一規則對單純隨機組 p = 0.010，對配對換手率的隨機組 p = 0.143，**對照組的設計會決定結論**。
+
+---
+
 ## 1. Highlights / 亮點
 
 ### 1.1 Realistic Taiwan-market backtest engine / 貼近台股真實規則的回測引擎
@@ -47,8 +57,8 @@
 - **中文：** 多方 / 空方 / 查核員三方辯論，輸入是程式產生的研究資料包，雙方引用數字，查核員逐點核對並列出爭點，不判定勝負、不給買賣建議。本機 Ollama（Qwen3 4B）寫白話摘要；**數字查核器**逐一比對輸出與輸入的數字，**禁用詞**擋掉建議式用語；LLM 只允許連本機。AI 也能提出有文獻依據的研究假設（須寫明誰在賠錢、來源），但受**每月額度**與**墓園規則**限制：同家族已有 AI 規則不通過，就不能再提同家族新規則。AI 規則與使用者規則適用同一門檻與同一 Bonferroni 計數，且須人工同意才執行。
 
 ### 1.7 Engineering workflow / 工程流程
-- **EN:** 200+ pytest test functions (216 at time of writing) including oracle tests and a `mutants.py` of intentionally buggy variants. Development uses Claude Code with role-specific sub-agents (explorer, fixer, checker, leak-reviewer, diff-reviewer). A **git pre-commit gate** hashes the staged diff, requires a reviewer approval for exactly that hash, and blocks the commit if the content differs.
-- **中文：** 200 個以上 pytest 測試函式（撰寫時 216 個），含 oracle 測試與故意埋錯的 `mutants.py`。以 Claude Code 子代理分工（explorer、fixer、checker、leak-reviewer、diff-reviewer）。git pre-commit 閘門會雜湊暫存差異，須經審查核准該雜湊才能提交，內容不符就擋下。
+- **EN:** 250 pytest tests including oracle tests and a `mutants.py` of intentionally buggy variants. Development uses Claude Code with role-specific sub-agents (explorer, fixer, checker, leak-reviewer, diff-reviewer). A **git pre-commit gate** hashes the staged diff, requires a reviewer approval for exactly that hash, and blocks the commit if the content differs.
+- **中文：** 250 個 pytest 測試，含 oracle 測試與故意埋錯的 `mutants.py`。以 Claude Code 子代理分工（explorer、fixer、checker、leak-reviewer、diff-reviewer）。git pre-commit 閘門會雜湊暫存差異，須經審查核准該雜湊才能提交，內容不符就擋下。
 
 ---
 
