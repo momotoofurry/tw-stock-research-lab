@@ -10,7 +10,7 @@
 
 每個規則都要和兩個對照組比較：0050 含息，以及「同股票池、同持股數、同換手率」的配對隨機選股。另外有六項穩健性檢驗，並依至今試過的規則數做 Bonferroni 修正。
 
-結果四個規則全部不通過。年化報酬最高的規則（28.2%）Sharpe 仍低於 0050（0.85 vs 0.91），最大回撤深 23 個百分點，對配對隨機的 p = 0.143。在保留期（2025-01 至 2026-10），它的年化只有 12.3%，同期 0050 是 54.1%。單檔擇時方法（均線交叉、K 線加量能、LightGBM）在 40 檔股票中，顯著勝過隨機訊號的檔數和純運氣的預期相近。
+結果四個規則全部不通過。年化報酬最高的規則（28.2%）Sharpe 仍低於 0050（0.85 vs 0.91），最大回撤深 23 個百分點，對配對隨機的 p = 0.143。在保留期（2025-01 至 2026-10），它的年化只有 12.3%，同期 0050 是 54.1%。單檔擇時方法（均線交叉、K 線加量能、LightGBM）在 40 檔股票中很少勝過買進持有。多數版本顯著勝過隨機訊號的檔數和純運氣的預期相近；LightGBM 20 日版本略高於運氣水準，但主要是「比隨機進出少輸」，不是賺贏持有。
 
 主要的方法論發現：
 - 對照組的設計會決定結論。同一個排名規則，對「單純隨機挑 10 檔」的 p = 0.010，改用配對換手率的隨機組後變成 p = 0.143。
@@ -29,7 +29,7 @@ The universe includes delisted stocks.
 
 Each rule must beat two controls. The first is the dividend-inclusive 0050 ETF. The second is a matched random-selection portfolio drawn from the same eligible pool, with the same number of holdings and the same turnover. Each rule must also survive six robustness checks, with a Bonferroni correction over every distinct rule ever tried.
 
-**All four rules fail.** The highest-return rule earns 28.2% a year, yet its Sharpe ratio is below the benchmark's (0.85 vs 0.91) and its drawdown is 23 percentage points deeper. Against matched random selection its p-value is 0.143. In the 2025 to 2026 holdout it returned 12.3% a year while the benchmark returned 54.1%. Single-stock timing models (moving-average crossover, candlestick and volume, LightGBM) produce significant results in about as many of 40 stocks as chance alone predicts.
+**All four rules fail.** The highest-return rule earns 28.2% a year, yet its Sharpe ratio is below the benchmark's (0.85 vs 0.91) and its drawdown is 23 percentage points deeper. Against matched random selection its p-value is 0.143. In the 2025 to 2026 holdout it returned 12.3% a year while the benchmark returned 54.1%. Single-stock timing models (moving-average crossover, candlestick and volume, LightGBM) rarely beat buy-and-hold across 40 stocks. Most produce about as many significant results as chance predicts; the 20-day LightGBM runs exceed that level, but mainly by losing less than random timing.
 
 The central methodological finding is that **the choice of control decides the conclusion**. The same ranking rule has p = 0.010 against naive random 10-stock portfolios and p = 0.143 against turnover-matched random portfolios.
 
@@ -144,11 +144,13 @@ All rules are long-only, equal-weight, filtered by price > TWD 10 and 20-day ave
 | Portfolio | CAGR | Max DD | Sharpe | Turnover / yr |
 |---|---|---|---|---|
 | **0050 (dividends reinvested)** | **14.9%** | **−30.2%** | **0.91** | 0.1× |
-| Equal-weight eligible pool | 13.2% | −35.2% | 0.70 | 1.2× |
+| Equal-weight eligible pool (63-day rebalance)¹ | 13.2% | −35.2% | 0.70 | 1.2× |
 | `retired_rank` | 28.2% | −52.9% | 0.85 | 3.3× |
 | `global_trend_momentum` | 18.0% | −67.6% | 0.60 | 3.4× |
 | `cheap_growth` | −0.7% | −50.1% | 0.09 | 3.2× |
 | `ai_illiquidity_quality` | 19.0% | −41.3% | 0.95 | 2.0× |
+
+¹ Matches the first three rules. For `ai_illiquidity_quality` (126-day rebalance) the equal-weight pool earned 13.6%, with max DD −34.9%, Sharpe 0.73 and turnover 0.8×.
 
 ### 5.2 Check-by-check outcome
 
@@ -203,17 +205,24 @@ Because the holdout is now spent, the rule is retired, and new rules can earn ou
 
 The same engine was applied to 40 large listed stocks (2018 to 2024, development period only), comparing each timing strategy with buy-and-hold of that stock and with 100 to 200 random signals per stock that match its exposure and turnover. Under the null of no skill, about 2 of 40 stocks (5%) should appear significant by chance.
 
-| Strategy | Beats buy-and-hold (CAGR) | Median excess CAGR | Significant vs random (p < 0.05) | Mean random percentile |
+All eight study runs on record are listed. "v2" rows are re-runs after engine revisions, with 100 rather than 200 random signals per stock.
+
+| Strategy (run) | Beats buy-and-hold (CAGR) | Median excess CAGR | Significant vs random (p < 0.05) | Mean random percentile |
 |---|---|---|---|---|
-| MA crossover (5/20) | 4 / 40 | −5.7% | 3 / 40 | 57% |
-| Candlestick + volume | 6 / 40 | −10.0% | 3 / 40 | 44% |
-| LightGBM, next day | 0 / 40 | −28.8% | 5 / 40 | 60% |
+| MA crossover 5/20 (v1) | 2 / 40 | −5.9% | 2 / 40 | 56% |
+| MA crossover 5/20 (v2) | 4 / 40 | −5.7% | 3 / 40 | 57% |
+| Candlestick + volume (v1) | 6 / 40 | −9.7% | 3 / 40 | 44% |
+| Candlestick + volume (v2) | 6 / 40 | −10.0% | 3 / 40 | 44% |
+| LightGBM, next day (v1) | 0 / 40 | −28.8% | 5 / 40 | 60% |
 | LightGBM, 5-day horizon | 2 / 40 | −15.3% | 2 / 40 | 52% |
 | LightGBM, 20-day horizon | 5 / 40 | −9.5% | 7 / 40 | 53% |
+| LightGBM, 20-day horizon (v2) | 5 / 40 | −7.5% | 6 / 40 | 55% |
 
-LightGBM is trained walk-forward (500-day train, 60-day test, gap ≥ horizon). The per-stock research packets report its out-of-sample directional accuracy next to the accuracy of always predicting the majority class; in the examples examined the gap is small (for instance 51.8% vs 51.4%). These counts were not Bonferroni-adjusted across the five variants, which makes the weak results more conservative, not less.
+Most runs sit at or near the chance level of about 2 significant stocks. The 20-day LightGBM runs are the exception: 6 to 7 of 40 is above that level before any correction for the eight runs tried (for a single run in isolation, P(≥6 of 40 | 5%) ≈ 0.014 and P(≥7 of 40 | 5%) ≈ 0.003). Even in those runs, at most 5 of 40 stocks beat buy-and-hold on CAGR and 7 of 40 on Sharpe. So beating random timing mostly meant losing less than random timing, not earning more than holding the stock.
 
-The pattern is consistent with weak-form efficiency net of costs for these stocks. Some strategies reduce drawdowns, mainly by staying out of the market, but almost none improve risk-adjusted returns.
+LightGBM is trained walk-forward (500-day train, 60-day test, gap ≥ horizon). The per-stock research packets report its out-of-sample directional accuracy next to the accuracy of always predicting the majority class; in the examples examined the gap is small (for instance 51.8% vs 51.4%). The counts above are not Bonferroni-adjusted across the eight runs.
+
+Overall, the pattern is consistent with weak-form efficiency net of costs for these stocks. Some strategies reduce drawdowns, mainly by staying out of the market, but almost none improve risk-adjusted returns.
 
 ## 8. Forward Paper Tracking
 
